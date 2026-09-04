@@ -1,4 +1,4 @@
-// ---------- Canvas 手写签名 ----------
+// ---------- Canvas signature pad ----------
 const canvas = document.getElementById("signaturePad");
 const ctx = canvas.getContext("2d");
 let drawing = false;
@@ -19,12 +19,12 @@ function draw(e) {
   ctx.moveTo(e.offsetX, e.offsetY);
 }
 
-// ---------- 清空 Canvas ----------
+// ---------- Clear the canvas ----------
 document.getElementById("clearSignature").addEventListener("click", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
-// ---------- 提交签名 ----------
+// ---------- Submit a signature ----------
 document.getElementById("petitionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -57,7 +57,7 @@ document.getElementById("petitionForm").addEventListener("submit", async (e) => 
   }
 });
 
-// ---------- 获取总签名人数 ----------
+// ---------- Load the total signature count ----------
 async function loadSignatureCount() {
   try {
     const res = await fetch("/api/count");
@@ -69,7 +69,7 @@ async function loadSignatureCount() {
 }
 loadSignatureCount();
 
-// ---------- 管理员功能 ----------
+// ---------- Admin tools ----------
 let adminPassword = null;
 
 document.getElementById("adminLoginBtn").addEventListener("click", async () => {
@@ -80,7 +80,7 @@ document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   document.getElementById("exportExcel").classList.remove("hidden");
 });
 
-// 加载管理员签名列表
+// Load the admin signature list
 async function loadAdminSignatures() {
   try {
     const res = await fetch("/api/admin/signs", { headers: { "x-admin-password": adminPassword } });
@@ -101,7 +101,7 @@ async function loadAdminSignatures() {
   } catch (err) { console.error(err); }
 }
 
-// 删除签名
+// Delete a signature
 async function deleteSign(name, email) {
   if (!confirm(`Delete ${name}'s signature?`)) return;
   try {
@@ -119,7 +119,7 @@ async function deleteSign(name, email) {
   } catch (err) { console.error(err); }
 }
 
-// ---------- 导出 XLSX ----------
+// ---------- Export XLSX ----------
 document.getElementById("exportExcel").addEventListener("click", () => {
   fetch("/api/admin/export", {
     method: "GET",

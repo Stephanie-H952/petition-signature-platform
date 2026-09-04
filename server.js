@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ---------- 配置 AWS ----------
+// ---------- AWS configuration ----------
 const REGION = process.env.AWS_REGION || "us-east-2";
 const DYNAMO_TABLE = process.env.DYNAMO_TABLE;
 const S3_BUCKET = process.env.S3_BUCKET;
@@ -17,7 +17,7 @@ AWS.config.update({ region: REGION });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const s3 = new AWS.S3();
 
-// ---------- 中间件 ----------
+// ---------- Middleware ----------
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
@@ -29,7 +29,7 @@ function requireEnv(res, names) {
   return null;
 }
 
-// ---------- 用户提交签名 ----------
+// ---------- Submit a signature ----------
 app.post("/api/sign", async (req, res) => {
   try {
     const configError = requireEnv(res, ["DYNAMO_TABLE", "S3_BUCKET"]);
@@ -38,7 +38,7 @@ app.post("/api/sign", async (req, res) => {
     const { name, email, message, imageData } = req.body;
     if (!name || !email || !imageData) return res.status(400).json({ error: "Missing fields" });
 
-    // 上传 PNG 到 S3
+    // Upload the PNG to S3
     const base64Data = Buffer.from(imageData.replace(/^data:image\/\w+;base64,/, ""), "base64");
     const imageKey = `${uuidv4()}.png`;
     await s3.putObject({
@@ -50,7 +50,7 @@ app.post("/api/sign", async (req, res) => {
 
     const s3Key = imageKey;
 
-    // 写入 DynamoDB
+    // Save the signature metadata in DynamoDB
     await dynamo.put({
       TableName: DYNAMO_TABLE,
       Item: { name, email, message, s3Key, timestamp: new Date().toISOString() },
@@ -63,7 +63,7 @@ app.post("/api/sign", async (req, res) => {
   }
 });
 
-// ---------- 获取总签名人数 ----------
+// ---------- Get the total signature count ----------
 app.get("/api/count", async (req, res) => {
   try {
     const configError = requireEnv(res, ["DYNAMO_TABLE"]);
@@ -77,7 +77,7 @@ app.get("/api/count", async (req, res) => {
   }
 });
 
-// ---------- 管理员验证 ----------
+// ---------- Admin verification ----------
 function checkAdmin(req, res, next) {
   const configError = requireEnv(res, ["ADMIN_PASSWORD"]);
   if (configError) return;
@@ -87,7 +87,7 @@ function checkAdmin(req, res, next) {
   next();
 }
 
-// ---------- 管理员获取所有签名 ----------
+// ---------- Admin: get all signatures ----------
 app.get("/api/admin/signs", checkAdmin, async (req, res) => {
   try {
     const configError = requireEnv(res, ["DYNAMO_TABLE"]);
@@ -101,7 +101,7 @@ app.get("/api/admin/signs", checkAdmin, async (req, res) => {
   }
 });
 
-// ---------- 管理员删除签名 ----------
+// ---------- Admin: delete a signature ----------
 app.delete("/api/admin/signs", checkAdmin, async (req, res) => {
   try {
     const configError = requireEnv(res, ["DYNAMO_TABLE", "S3_BUCKET"]);
@@ -156,7 +156,7 @@ app.get('/api/admin/export', checkAdmin, async (req, res) => {
       timestamp: s.timestamp
     });
 
-    // 后端 fetch S3 图片
+    // Fetch the signature image from S3
     const obj = await s3.getObject({ Bucket: S3_BUCKET, Key: s.s3Key }).promise();
     const imageId = workbook.addImage({ buffer: obj.Body, extension: 'png' });
 
@@ -179,8 +179,8 @@ app.get('/api/admin/export', checkAdmin, async (req, res) => {
 });
 
 
-// ---------- 健康检查 ----------
+// ---------- Health check ----------
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// ---------- 启动服务 ----------
+// ---------- Start the server ----------
 app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
