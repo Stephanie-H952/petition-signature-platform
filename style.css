@@ -1,0 +1,79 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f8fa;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 650px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #2c3e50;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+input,
+textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+#signatureList {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 15px;
+}
+
+#signatureList li {
+  background: #ecf0f1;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+canvas {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 10px;
+  background: #fff;
+}
+
+.admin-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.hidden {
+  display: none;
+}

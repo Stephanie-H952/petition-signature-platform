@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oppose Coop Policy Restricting To 1 Time Per Graduate Student</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Petition: Oppose Coop Policy Limiting Internship Times</h1>
+    <p class="description">
+      [ADD CONTENT OF PETITION].
+    </p>
+    <hr>
+
+    <form id="petitionForm">
+      <input type="text" id="name" placeholder="Your Name" required />
+      <input type="email" id="email" placeholder="Your Email" required />
+      <textarea id="message" placeholder="Add a message (optional)"></textarea>
+
+      <label for="signaturePad">Draw Your Signature ✍️</label>
+      <canvas id="signaturePad" width="500" height="150"></canvas>
+      <button type="button" id="clearSignature">Clear Signature</button>
+
+      <button type="submit">Sign the Petition</button>
+    </form>
+
+    <h2>Signatures (<span id="signatureCount">0</span>)</h2>
+    <div class="admin-controls">
+      <button id="adminLoginBtn">Admin Login 🔐</button>
+      <button id="exportExcel" class="hidden">Export XLSX</button>
+    </div>
+
+    <ul id="signatureList"></ul>
+  </div>
+
+  <!-- 引入 ExcelJS 和 FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
