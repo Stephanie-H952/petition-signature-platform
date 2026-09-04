@@ -1,5 +1,3 @@
-import sizeOf from 'image-size';
-
 const express = require("express");
 const path = require("path");
 const AWS = require("aws-sdk");
@@ -9,9 +7,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------- 配置 AWS ----------
-const REGION = "us-east-2";
-const DYNAMO_TABLE = "petitionSignInfo";
-const S3_BUCKET = "petition-sign-image";
+const REGION = process.env.AWS_REGION || "us-east-2";
+const DYNAMO_TABLE = process.env.DYNAMO_TABLE;
+const S3_BUCKET = process.env.S3_BUCKET;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 AWS.config.update({ region: REGION });
 
@@ -22,9 +21,20 @@ const s3 = new AWS.S3();
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
+function requireEnv(res, names) {
+  const missing = names.filter((name) => !process.env[name]);
+  if (missing.length) {
+    return res.status(503).json({ error: `Missing server configuration: ${missing.join(", ")}` });
+  }
+  return null;
+}
+
 // ---------- 用户提交签名 ----------
 app.post("/api/sign", async (req, res) => {
   try {
+    const configError = requireEnv(res, ["DYNAMO_TABLE", "S3_BUCKET"]);
+    if (configError) return;
+
     const { name, email, message, imageData } = req.body;
     if (!name || !email || !imageData) return res.status(400).json({ error: "Missing fields" });
 
@@ -56,6 +66,9 @@ app.post("/api/sign", async (req, res) => {
 // ---------- 获取总签名人数 ----------
 app.get("/api/count", async (req, res) => {
   try {
+    const configError = requireEnv(res, ["DYNAMO_TABLE"]);
+    if (configError) return;
+
     const data = await dynamo.scan({ TableName: DYNAMO_TABLE, Select: "COUNT" }).promise();
     res.json({ count: data.Count });
   } catch (err) {
@@ -65,9 +78,10 @@ app.get("/api/count", async (req, res) => {
 });
 
 // ---------- 管理员验证 ----------
-const ADMIN_PASSWORD = "yourpassword"; // 你可以自定义密码
-
 function checkAdmin(req, res, next) {
+  const configError = requireEnv(res, ["ADMIN_PASSWORD"]);
+  if (configError) return;
+
   const pwd = req.headers["x-admin-password"];
   if (pwd !== ADMIN_PASSWORD) return res.status(403).json({ error: "Unauthorized" });
   next();
@@ -76,6 +90,9 @@ function checkAdmin(req, res, next) {
 // ---------- 管理员获取所有签名 ----------
 app.get("/api/admin/signs", checkAdmin, async (req, res) => {
   try {
+    const configError = requireEnv(res, ["DYNAMO_TABLE"]);
+    if (configError) return;
+
     const data = await dynamo.scan({ TableName: DYNAMO_TABLE }).promise();
     res.json({ signs: data.Items });
   } catch (err) {
@@ -87,6 +104,9 @@ app.get("/api/admin/signs", checkAdmin, async (req, res) => {
 // ---------- 管理员删除签名 ----------
 app.delete("/api/admin/signs", checkAdmin, async (req, res) => {
   try {
+    const configError = requireEnv(res, ["DYNAMO_TABLE", "S3_BUCKET"]);
+    if (configError) return;
+
     const { name, email } = req.body;
     const getRes = await dynamo.get({ TableName: DYNAMO_TABLE, Key: { name, email } }).promise();
     if (!getRes.Item) return res.status(404).json({ error: "Record not found" });
@@ -104,12 +124,11 @@ app.delete("/api/admin/signs", checkAdmin, async (req, res) => {
 
 const ExcelJS = require('exceljs');
 
-app.get('/api/admin/export', async (req, res) => {
-  if (req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
-
+app.get('/api/admin/export', checkAdmin, async (req, res) => {
   try {
+    const configError = requireEnv(res, ["DYNAMO_TABLE", "S3_BUCKET"]);
+    if (configError) return;
+
     const data = await dynamo.scan({ TableName: DYNAMO_TABLE }).promise();
     const signs = data.Items;
   
@@ -138,7 +157,7 @@ app.get('/api/admin/export', async (req, res) => {
     });
 
     // 后端 fetch S3 图片
-    const obj = await s3.getObject({ Bucket: 'petition-sign-image', Key: s.s3Key }).promise();
+    const obj = await s3.getObject({ Bucket: S3_BUCKET, Key: s.s3Key }).promise();
     const imageId = workbook.addImage({ buffer: obj.Body, extension: 'png' });
 
     sheet.addImage(imageId, {
